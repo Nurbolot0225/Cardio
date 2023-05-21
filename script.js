@@ -17,15 +17,31 @@ if (navigator.geolocation) {
       const coords = [latitude, longitude];
 
       console.log(`https://www.google.com/maps/@${latitude},${longitude},13z`);
+
       const map = L.map('map').setView(coords, 13);
 
       L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map);
 
-      L.marker(coords).addTo(map)
-        .bindPopup('A pretty CSS popup.<br> Easily customizable.')
-        .openPopup();
+      map.on('click', function(mapEvent) {
+        console.log(mapEvent);
+
+        const {lat, lng} = mapEvent.latlng;
+
+        L.marker([lat, lng])
+          .addTo(map)
+          .bindPopup(
+            L.popup({
+              maxWidth: 200,
+              minHeight: 100,
+              autoClose: false,
+              closeOnClick: false,
+              className: 'running-popup',
+          }))
+          .setPopupContent('Тренеровка')
+          .openPopup();
+      })
     },
     function() {
       alert('Что то пошло не так!')
