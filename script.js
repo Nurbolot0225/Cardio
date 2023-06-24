@@ -24,10 +24,6 @@ class Workout {
       ? this.description = `Пробежка ${new Intl.DateTimeFormat('ru-Ru').format(this.date)}`
       : this.description = `Велотренировка ${new Intl.DateTimeFormat('ru-Ru').format(this.date)}`
   }
-
-  click() {
-    this.clickNumber++
-  }
 }
 
 class Running extends Workout {
@@ -68,14 +64,20 @@ const cycling = new Cycling([50, 39], 37, 80, 370)
 const timeInMs = Date.now()
 
 class App {
-
   #map
   #mapEvent
   #workouts = []
 
   constructor() {
+    // Получение местоположения пользователя
     this._getPosition();
+
+    // Получение данных из local storage
+    this._getLocalStorageData()
+
+    // Добавление обработчик сабытия
     form.addEventListener('submit', this._newWorkout.bind(this))
+
     inputType.addEventListener('change', this._toggleClimbField)
     containerWorkouts.addEventListener('click', this._moveToWorkout.bind(this))
   }
@@ -90,17 +92,22 @@ class App {
   }
 
   _loadMap(position) {
-      const {latitude} = position.coords
-      const {longitude} = position.coords
-      const coords = [latitude, longitude]
-      this.#map = L.map('map').setView(coords, 13)
+    const {latitude} = position.coords
+    const {longitude} = position.coords
+    const coords = [latitude, longitude]
+    this.#map = L.map('map').setView(coords, 13)
 
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(this.#map)
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(this.#map)
 
-      // Обработка клика на карте
-      this.#map.on('click', this._showForm.bind(this))
+    // Обработка клика на карте
+    this.#map.on('click', this._showForm.bind(this))
+
+    // Отабражение тренировок из local storage на карте
+    this.#workouts.forEach(workout => {
+      this._displayWorkout(workout)
+    })
   }
 
   _showForm(e) {
@@ -174,6 +181,9 @@ class App {
 
     // Спрятать форму и очистить поля ввода данных
     this._hideForm()
+
+    // Добавить все тренировки в локального хранилище
+    this._addWorkoutsToLocalStorage()
   }
 
   _displayWorkout(workout) {
@@ -256,10 +266,28 @@ class App {
         duration: 1,
       }
     })
+  }
 
-    workout.click()
+  _addWorkoutsToLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts))
+  }
 
-    console.log(workout);
+  _getLocalStorageData() {
+    const data = JSON.parse(localStorage.getItem('workouts'))
+
+    if (!data) return
+
+    this.#workouts = data
+
+    this.#workouts.forEach(workout => {
+      this._displayWorkoutOnSidebar(workout)
+    })
+  }
+
+  // Удаление данные из Local storage
+  reset() {
+    localStorage.removeItem('workouts')
+    location.reload();
   }
 }
 
