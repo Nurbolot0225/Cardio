@@ -11,6 +11,7 @@ const inputClimb = document.querySelector('.form__input--climb');
 class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-10)
+  clickNumber = 0
 
   constructor(coords, distance, duration) {
     this.coords = coords;
@@ -22,6 +23,10 @@ class Workout {
     this.type === 'running'
       ? this.description = `Пробежка ${new Intl.DateTimeFormat('ru-Ru').format(this.date)}`
       : this.description = `Велотренировка ${new Intl.DateTimeFormat('ru-Ru').format(this.date)}`
+  }
+
+  click() {
+    this.clickNumber++
   }
 }
 
@@ -70,10 +75,9 @@ class App {
 
   constructor() {
     this._getPosition();
-
-    form.addEventListener('submit', this._newWorkout.bind(this));
-
+    form.addEventListener('submit', this._newWorkout.bind(this))
     inputType.addEventListener('change', this._toggleClimbField)
+    containerWorkouts.addEventListener('click', this._moveToWorkout.bind(this))
   }
 
   _getPosition() {
@@ -88,9 +92,7 @@ class App {
   _loadMap(position) {
       const {latitude} = position.coords
       const {longitude} = position.coords
-
       const coords = [latitude, longitude]
-
       this.#map = L.map('map').setView(coords, 13)
 
       L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
@@ -239,6 +241,26 @@ class App {
 
     form.insertAdjacentHTML('afterend', html)
    }
+
+  _moveToWorkout(e) {
+    const workoutElement = e.target.closest('.workout')
+
+    if(!workoutElement) return
+
+    const workout = this.#workouts.find(
+      item => item.id === workoutElement.dataset.id)
+
+    this.#map.setView(workout.coords, 13, {
+      animate: true,
+      pan: {
+        duration: 1,
+      }
+    })
+
+    workout.click()
+
+    console.log(workout);
+  }
 }
 
 const app = new App()
